@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather & Travel Planner</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Lora:wght@700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🌤️ Weather & Travel Planner</h1>
+            <p>Plan your trip with real-time weather and discover amazing places!</p>
+        </header>
+
+        <main>
+            <section class="search-section">
+                <form id="search-form" class="search-form">
+                    <div class="input-group">
+                        <input 
+                            type="text" 
+                            id="city-input" 
+                            placeholder="Enter city name (e.g., London, Paris, New York)" 
+                            required
+                            aria-label="City name"
+                        >
+                        <button type="submit" id="search-btn">
+                            <span>Search</span>
+                            <div class="loading-spinner" id="loading-spinner"></div>
+                        </button>
+                    </div>
+                </form>
+            </section>
+
+            <section class="results-section">
+                <div id="weather-result" class="weather-card hidden">
+                    <h2>Current Weather</h2>
+                    <div id="weather-data" class="weather-data"></div>
+                </div>
+
+                <div id="attractions-result" class="attractions-section hidden">
+                    <h2>Nearby Attractions</h2>
+                    <div id="attractions-data" class="attractions-grid">
+                        <p class="placeholder">Attractions will appear here after search</p>
+                    </div>
+                </div>
+
+                <div id="error-message" class="error-message hidden">
+                    <p>Sorry, we couldn't find weather data for that city. Please try again.</p>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p>Built with ❤️ for better travel planning</p>
+        </footer>
+    </div>
+
+    <script src="weather.js"></script>
+    <script src="main.js"></script>
+</body>
+</html>
