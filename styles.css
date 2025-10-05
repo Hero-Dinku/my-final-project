@@ -301,3 +301,114 @@ footer {
         font-size: 1.75rem;
     }
 }
+/* Favorites Section */
+.favorites-section {
+    padding: 0 2rem 2rem;
+}
+
+.favorites-card {
+    background: var(--light-gray);
+    border-radius: 10px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    animation: fadeIn 0.5s ease-in;
+}
+
+.favorites-card h2 {
+    color: var(--dark-gray);
+    margin-bottom: 1rem;
+    font-family: 'Lora', serif;
+}
+
+.favorites-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.favorite-item {
+    background: var(--white);
+    padding: 1rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.favorite-info {
+    flex: 1;
+}
+
+.favorite-name {
+    font-weight: 600;
+    color: var(--primary-blue);
+}
+
+.favorite-temp {
+    font-size: 0.9rem;
+    color: var(--dark-gray);
+    opacity: 0.7;
+}
+
+.remove-favorite {
+    background: var(--error-red);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.remove-favorite:hover {
+    background: #c0392b;
+}
+
+/* Weather Header Styles */
+.weather-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--border-gray);
+}
+
+.weather-header h3 {
+    margin: 0;
+    color: var(--dark-gray);
+    font-family: 'Lora', serif;
+}
+
+.add-favorite {
+    background: gold;
+    color: var(--dark-gray);
+    border: none;
+    border-radius: 20px;
+    padding: 8px 16px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+}
+
+.add-favorite:hover {
+    background: #ffd700;
+    transform: scale(1.05);
+}
+
+.weather-items {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+}
+
+/* Attraction Rating */
+.attraction-rating {
+    color: gold;
+    font-weight: 600;
+    margin-top: 0.5rem;
+}

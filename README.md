@@ -26,10 +26,10 @@ Upcoming Features
 
  Live Demo
 
-Visit the live site: [https://your-username.github.io/my-final-project](https://your-username.github.io/my-final-project)
+Visit the live site: [https://hero-dinku.github.io/my-final-project](https://hero-dinku.github.io/my-final-project)
 
  Local Development
 
 1. Clone the repository:
 ```bash
-git clone https://github.com/your-username/my-final-project.git
+git clone https://github.com/hero-dinku/my-final-project.git
