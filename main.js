@@ -38,8 +38,8 @@ document.addEventListener('DOMContentLoaded', function() {
             const weather = await weatherAPI.getCurrentWeather(city);
             displayWeatherData(weather);
             
-            // Show attractions placeholder
-            displayAttractionsPlaceholder(city);
+            // Fetch attractions data
+            await fetchAttractions(city);
             
         } catch (error) {
             console.error('Search error:', error);
@@ -85,8 +85,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="weather-item">
                     <div class="weather-label">Condition</div>
-                    <div class="weather-value">${current.condition.icon}</div>
-                    <div class="weather-label">${current.condition.text}</div>
+                    <div class="weather-value">${current.condition.text}</div>
+                    <div class="weather-label">${current.condition.icon}</div>
                 </div>
                 <div class="weather-item">
                     <div class="weather-label">Humidity</div>
@@ -115,13 +115,40 @@ document.addEventListener('DOMContentLoaded', function() {
                 </div>
                 <div class="weather-item">
                     <div class="weather-label">Last Updated</div>
-                    <div class="weather-value">${current.last_updated}</div>
+                    <div class="weather-value">${new Date(current.last_updated).toLocaleString()}</div>
                     <div class="weather-label">Latest Data</div>
                 </div>
             </div>
         `;
         
         weatherResult.classList.remove('hidden');
+    }
+
+    async function fetchAttractions(city) {
+        try {
+            const attractions = await weatherAPI.getAttractions(city);
+            displayAttractionsData(attractions, city);
+        } catch (error) {
+            console.error('Error fetching attractions:', error);
+            displayAttractionsPlaceholder(city);
+        }
+    }
+
+    function displayAttractionsData(attractions, city) {
+        if (!attractions || attractions.length === 0) {
+            displayAttractionsPlaceholder(city);
+            return;
+        }
+
+        attractionsData.innerHTML = attractions.map(attraction => `
+            <div class="attraction-card">
+                <h3>${attraction.name}</h3>
+                <p>${attraction.description || 'A wonderful place to visit in ' + city}</p>
+                ${attraction.rating ? `<div class="attraction-rating">⭐ ${attraction.rating}/5</div>` : ''}
+            </div>
+        `).join('');
+        
+        attractionsResult.classList.remove('hidden');
     }
 
     function displayAttractionsPlaceholder(city) {
@@ -142,7 +169,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="attraction-rating">⭐ 4.7/5</div>
             </div>
             <div class="placeholder">
-                <p><strong>Coming in Week 7:</strong> Real attractions data from Google Places API!</p>
+                <p><strong>Note:</strong> Using placeholder attractions data</p>
             </div>
         `;
         attractionsResult.classList.remove('hidden');

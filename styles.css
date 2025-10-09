@@ -241,66 +241,6 @@ header p {
     }
 }
 
-/* Utility Classes */
-.hidden {
-    display: none !important;
-}
-
-/* Footer */
-footer {
-    text-align: center;
-    padding: 2rem;
-    background: var(--light-gray);
-    color: var(--dark-gray);
-    opacity: 0.8;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .container {
-        margin: 10px;
-        border-radius: 10px;
-    }
-    
-    header h1 {
-        font-size: 2rem;
-    }
-    
-    .search-section,
-    .results-section {
-        padding: 1rem;
-    }
-    
-    .input-group {
-        flex-direction: column;
-    }
-    
-    #city-input {
-        min-width: auto;
-    }
-    
-    .weather-data {
-        grid-template-columns: 1fr;
-    }
-    
-    .attractions-grid {
-        grid-template-columns: 1fr;
-    }
-}
-
-@media (max-width: 480px) {
-    body {
-        padding: 10px;
-    }
-    
-    header {
-        padding: 1.5rem 1rem;
-    }
-    
-    header h1 {
-        font-size: 1.75rem;
-    }
-}
 /* Favorites Section */
 .favorites-section {
     padding: 0 2rem 2rem;
@@ -411,4 +351,71 @@ footer {
     color: gold;
     font-weight: 600;
     margin-top: 0.5rem;
+}
+
+/* Utility Classes */
+.hidden {
+    display: none !important;
+}
+
+/* Footer */
+footer {
+    text-align: center;
+    padding: 2rem;
+    background: var(--light-gray);
+    color: var(--dark-gray);
+    opacity: 0.8;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .container {
+        margin: 10px;
+        border-radius: 10px;
+    }
+    
+    header h1 {
+        font-size: 2rem;
+    }
+    
+    .search-section,
+    .results-section {
+        padding: 1rem;
+    }
+    
+    .input-group {
+        flex-direction: column;
+    }
+    
+    #city-input {
+        min-width: auto;
+    }
+    
+    .weather-data {
+        grid-template-columns: 1fr;
+    }
+    
+    .attractions-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .weather-header {
+        flex-direction: column;
+        gap: 1rem;
+        text-align: center;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding: 10px;
+    }
+    
+    header {
+        padding: 1.5rem 1rem;
+    }
+    
+    header h1 {
+        font-size: 1.75rem;
+    }
 }
