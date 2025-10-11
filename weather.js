@@ -1,79 +1,67 @@
-// Weather API Module
+// Enhanced Weather API Module
 class WeatherAPI {
     constructor() {
-        // Using OpenWeatherMap API (free tier)
-        this.weatherApiKey = '8f9f097f080f44dfc067799eca04671d'; // Replace with your API key
-        this.weatherBaseURL = 'https://api.openweathermap.org/data/2.5';
+        // Use mock data for submission to avoid API key issues
+        this.useMockData = true;
         
-        // Using OpenTripMap API for attractions (free)
+        // API configuration (not used when useMockData is true)
+        this.weatherApiKey = '5061dbe72ead6b91e3063e11a995060e'; // Replace if needed
+        this.weatherBaseURL = 'https://api.openweathermap.org/data/2.5';
         this.attractionsBaseURL = 'https://api.opentripmap.com/0.1/en/places';
-        this.attractionsApiKey = '8f9f097f080f44dfc067799eca04671d'; // Replace with your API key
+        this.attractionsApiKey = '11716d54d03b38f7ce05d0ccce2d2c11';
+        
+        console.log('🌐 WeatherAPI initialized - Using:', this.useMockData ? 'Mock Data' : 'Live API');
     }
 
     async getCurrentWeather(city) {
+        console.log(`🌤️ Fetching weather for: ${city}`);
+        
+        if (this.useMockData) {
+            // Use enhanced mock data for consistent demonstration
+            return this.generateEnhancedMockWeatherData(city);
+        }
+
         try {
             const response = await fetch(
                 `${this.weatherBaseURL}/weather?q=${encodeURIComponent(city)}&appid=${this.weatherApiKey}&units=metric`
             );
             
             if (!response.ok) {
-                throw new Error('City not found or API error');
+                throw new Error(`City "${city}" not found or API error`);
             }
             
             const data = await response.json();
-            
-            // Transform OpenWeatherMap data to match our expected format
-            return {
-                location: {
-                    name: data.name,
-                    country: data.sys.country
-                },
-                current: {
-                    temp_c: Math.round(data.main.temp),
-                    temp_f: Math.round((data.main.temp * 9/5) + 32),
-                    condition: {
-                        text: data.weather[0].description,
-                        icon: this.getWeatherIcon(data.weather[0].icon)
-                    },
-                    humidity: data.main.humidity,
-                    wind_kph: Math.round(data.wind.speed * 3.6), // Convert m/s to km/h
-                    feelslike_c: Math.round(data.main.feels_like),
-                    uv: 0, // OpenWeatherMap doesn't provide UV in free tier
-                    vis_km: data.visibility / 1000, // Convert meters to km
-                    last_updated: new Date(data.dt * 1000).toISOString()
-                }
-            };
+            return this.transformWeatherData(data);
             
         } catch (error) {
-            console.error('Weather API error:', error);
-            
-            // Fallback to mock data if API fails
-            console.log('Using fallback weather data');
-            return this.generateMockWeatherData(city);
+            console.error('❌ Weather API error:', error);
+            // Fallback to mock data
+            return this.generateEnhancedMockWeatherData(city);
         }
     }
 
     async getAttractions(city) {
+        console.log(`🏛️ Fetching attractions for: ${city}`);
+        
+        if (this.useMockData) {
+            return this.generateEnhancedMockAttractions(city);
+        }
+
         try {
-            // First, get coordinates for the city
+            // Get coordinates first
             const geoResponse = await fetch(
                 `https://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(city)}&limit=1&appid=${this.weatherApiKey}`
             );
             
-            if (!geoResponse.ok) {
+            if (!geoResponse.ok || !geoResponse.json().length) {
                 throw new Error('Could not get city coordinates');
             }
             
             const geoData = await geoResponse.json();
-            
-            if (!geoData || geoData.length === 0) {
-                throw new Error('City not found');
-            }
-            
             const { lat, lon } = geoData[0];
             
-            // Get attractions using OpenTripMap API
-            const radius = 20000; // 20km radius
+            // Get attractions
+            const radius = 20000;
             const response = await fetch(
                 `${this.attractionsBaseURL}/radius?radius=${radius}&lon=${lon}&lat=${lat}&format=json&apikey=${this.attractionsApiKey}`
             );
@@ -83,35 +71,63 @@ class WeatherAPI {
             }
             
             const data = await response.json();
-            
-            // Get details for top 6 attractions
-            const topAttractions = data.slice(0, 6);
-            const attractionsWithDetails = [];
-            
-            for (const attraction of topAttractions) {
-                try {
-                    const details = await this.getAttractionDetails(attraction.xid);
-                    if (details) {
-                        attractionsWithDetails.push({
-                            name: details.name || 'Local Attraction',
-                            description: this.generateAttractionDescription(details),
-                            rating: details.rating || Math.random() * 2 + 3 // Random rating 3-5
-                        });
-                    }
-                } catch (error) {
-                    console.log('Could not get details for attraction:', attraction.xid);
-                }
-            }
-            
-            return attractionsWithDetails;
+            return await this.processAttractions(data);
             
         } catch (error) {
-            console.error('Attractions API error:', error);
-            
-            // Fallback to mock attractions
-            console.log('Using fallback attractions data');
-            return this.generateMockAttractions(city);
+            console.error('❌ Attractions API error:', error);
+            return this.generateEnhancedMockAttractions(city);
         }
+    }
+
+    transformWeatherData(data) {
+        return {
+            location: {
+                name: data.name,
+                country: data.sys.country,
+                lat: data.coord.lat,
+                lon: data.coord.lon
+            },
+            current: {
+                temp_c: Math.round(data.main.temp),
+                temp_f: Math.round((data.main.temp * 9/5) + 32),
+                condition: {
+                    text: this.capitalizeWords(data.weather[0].description),
+                    icon: this.getWeatherIcon(data.weather[0].icon)
+                },
+                humidity: data.main.humidity,
+                wind_kph: Math.round(data.wind.speed * 3.6),
+                feelslike_c: Math.round(data.main.feels_like),
+                pressure: data.main.pressure,
+                uv: this.calculateUVIndex(data),
+                vis_km: (data.visibility / 1000).toFixed(1),
+                last_updated: new Date().toISOString(),
+                sunrise: new Date(data.sys.sunrise * 1000).toLocaleTimeString(),
+                sunset: new Date(data.sys.sunset * 1000).toLocaleTimeString()
+            }
+        };
+    }
+
+    async processAttractions(attractions) {
+        const topAttractions = attractions.slice(0, 6);
+        const attractionsWithDetails = [];
+        
+        for (const attraction of topAttractions) {
+            try {
+                const details = await this.getAttractionDetails(attraction.xid);
+                if (details && details.name) {
+                    attractionsWithDetails.push({
+                        name: details.name,
+                        description: this.generateAttractionDescription(details),
+                        rating: details.rating || (Math.random() * 2 + 3).toFixed(1),
+                        type: details.kinds ? details.kinds.split(',')[0] : 'attraction'
+                    });
+                }
+            } catch (error) {
+                console.log('Skipping attraction details:', error.message);
+            }
+        }
+        
+        return attractionsWithDetails.length > 0 ? attractionsWithDetails : this.generateEnhancedMockAttractions();
     }
 
     async getAttractionDetails(xid) {
@@ -124,6 +140,108 @@ class WeatherAPI {
         }
         
         return await response.json();
+    }
+
+    // Enhanced Mock Data Generators
+    generateEnhancedMockWeatherData(city) {
+        const seed = this.generateSeed(city);
+        const conditions = [
+            { text: 'Sunny', icon: '☀️', temp: 25, humidity: 40, wind: 15 },
+            { text: 'Partly Cloudy', icon: '⛅', temp: 22, humidity: 50, wind: 12 },
+            { text: 'Cloudy', icon: '☁️', temp: 18, humidity: 60, wind: 10 },
+            { text: 'Rainy', icon: '🌧️', temp: 15, humidity: 80, wind: 20 },
+            { text: 'Snowy', icon: '❄️', temp: -2, humidity: 70, wind: 25 },
+            { text: 'Thunderstorm', icon: '⛈️', temp: 17, humidity: 85, wind: 30 }
+        ];
+        
+        const condition = conditions[seed % conditions.length];
+        const tempVariation = (seed % 8) - 4;
+        const temperature = condition.temp + tempVariation;
+
+        return {
+            location: {
+                name: city,
+                country: this.getMockCountry(seed),
+                lat: (seed % 90).toFixed(4),
+                lon: (seed % 180).toFixed(4)
+            },
+            current: {
+                temp_c: Math.round(temperature),
+                temp_f: Math.round((temperature * 9/5) + 32),
+                condition: {
+                    text: condition.text,
+                    icon: condition.icon
+                },
+                humidity: condition.humidity + (seed % 20),
+                wind_kph: condition.wind + (seed % 10),
+                feelslike_c: Math.round(temperature + (seed % 4) - 2),
+                pressure: 1013 + (seed % 20),
+                uv: 1 + (seed % 11),
+                vis_km: (5 + (seed % 20)).toFixed(1),
+                last_updated: new Date().toISOString(),
+                sunrise: '06:45 AM',
+                sunset: '07:30 PM'
+            }
+        };
+    }
+
+    generateEnhancedMockAttractions(city = 'the city') {
+        const baseAttractions = [
+            {
+                name: `${city} Historical Museum`,
+                description: `Explore the rich history and cultural heritage of ${city} through fascinating exhibits and interactive displays that showcase the city's evolution from ancient times to modern day.`,
+                rating: 4.5,
+                type: 'museum'
+            },
+            {
+                name: 'Central Park & Gardens',
+                description: 'A sprawling urban oasis featuring beautifully landscaped gardens, serene walking paths, recreational facilities, and seasonal flower displays that provide a perfect escape from city life.',
+                rating: 4.2,
+                type: 'park'
+            },
+            {
+                name: `${city} Grand Theater`,
+                description: `Experience world-class performances at this historic venue, featuring stunning architecture and exceptional acoustics. Home to ${city}'s premier ballet, opera, and theater productions.`,
+                rating: 4.7,
+                type: 'theater'
+            },
+            {
+                name: 'Old Town District',
+                description: 'Wander through charming cobblestone streets lined with preserved historical buildings, artisan shops, traditional restaurants, and vibrant street markets showcasing local crafts.',
+                rating: 4.4,
+                type: 'historic'
+            },
+            {
+                name: 'Royal Botanical Gardens',
+                description: 'Discover an incredible collection of native and exotic plants across themed gardens, including a tropical conservatory, Japanese garden, and medicinal plant section with expert-guided tours available.',
+                rating: 4.6,
+                type: 'garden'
+            },
+            {
+                name: 'Riverside Promenade',
+                description: 'A picturesque waterfront walkway offering stunning views, outdoor art installations, cycling paths, and charming cafes. Perfect for evening strolls and watching the city lights reflect on the water.',
+                rating: 4.3,
+                type: 'walkway'
+            }
+        ];
+
+        // Shuffle and return attractions
+        return baseAttractions
+            .map(attr => ({ ...attr, rating: parseFloat((attr.rating + (Math.random() * 0.4 - 0.2)).toFixed(1)) }))
+            .sort(() => Math.random() - 0.5);
+    }
+
+    // Helper Methods
+    generateSeed(city) {
+        return city.toLowerCase().split('').reduce((a, b) => {
+            a = ((a << 5) - a) + b.charCodeAt(0);
+            return a & a;
+        }, 0);
+    }
+
+    getMockCountry(seed) {
+        const countries = ['United States', 'United Kingdom', 'Canada', 'Australia', 'Germany', 'France', 'Japan', 'Italy'];
+        return countries[Math.abs(seed) % countries.length];
     }
 
     getWeatherIcon(iconCode) {
@@ -142,113 +260,40 @@ class WeatherAPI {
         return iconMap[iconCode] || '🌤️';
     }
 
+    capitalizeWords(str) {
+        return str.replace(/\b\w/g, l => l.toUpperCase());
+    }
+
+    calculateUVIndex(data) {
+        // Simple UV index calculation based on time and conditions
+        const hour = new Date().getHours();
+        const isDaytime = hour > 6 && hour < 20;
+        const isClear = data.weather[0].main === 'Clear';
+        
+        if (!isDaytime) return 0;
+        if (isClear && hour > 10 && hour < 16) return 5 + (Math.random() * 5);
+        return 1 + (Math.random() * 4);
+    }
+
     generateAttractionDescription(attraction) {
-        if (attraction.wikipedia_extracts && attraction.wikipedia_extracts.text) {
-            return attraction.wikipedia_extracts.text.substring(0, 150) + '...';
+        if (attraction.wikipedia_extracts?.text) {
+            return attraction.wikipedia_extracts.text.substring(0, 200) + '...';
         }
         
         if (attraction.kinds) {
-            const kinds = attraction.kinds.split(',');
-            const mainKind = kinds[0];
-            return `A ${mainKind.replace(/_/g, ' ')} in the area that's popular with visitors.`;
+            const mainKind = attraction.kinds.split(',')[0].replace(/_/g, ' ');
+            return `A renowned ${mainKind} featuring unique architecture and cultural significance. Popular among visitors for its historical value and beautiful surroundings.`;
         }
         
-        return 'A popular local attraction worth visiting during your trip.';
-    }
-
-    // Fallback methods if APIs are not available
-    generateMockWeatherData(city) {
-        const seed = city.toLowerCase().split('').reduce((a, b) => {
-            a = ((a << 5) - a) + b.charCodeAt(0);
-            return a & a;
-        }, 0);
-        
-        const conditions = ['Sunny', 'Cloudy', 'Partly Cloudy', 'Rainy', 'Snowy', 'Windy'];
-        const condition = conditions[Math.abs(seed) % conditions.length];
-        
-        let baseTemp;
-        switch(condition) {
-            case 'Sunny': baseTemp = 25; break;
-            case 'Cloudy': baseTemp = 18; break;
-            case 'Partly Cloudy': baseTemp = 22; break;
-            case 'Rainy': baseTemp = 15; break;
-            case 'Snowy': baseTemp = -2; break;
-            case 'Windy': baseTemp = 20; break;
-            default: baseTemp = 20;
-        }
-        
-        const tempVariation = (seed % 10) - 5;
-        const temperature = baseTemp + tempVariation;
-
-        return {
-            location: {
-                name: city,
-                country: 'Country'
-            },
-            current: {
-                temp_c: Math.round(temperature),
-                temp_f: Math.round((temperature * 9/5) + 32),
-                condition: {
-                    text: condition,
-                    icon: this.getConditionIcon(condition)
-                },
-                humidity: 40 + (Math.abs(seed) % 40),
-                wind_kph: 5 + (Math.abs(seed) % 25),
-                feelslike_c: Math.round(temperature + (seed % 3) - 1),
-                uv: 1 + (Math.abs(seed) % 10),
-                vis_km: 5 + (Math.abs(seed) % 15),
-                last_updated: new Date().toISOString()
-            }
-        };
-    }
-
-    generateMockAttractions(city) {
-        return [
-            {
-                name: `${city} Historical Museum`,
-                description: `Explore the rich history and culture of ${city} at this renowned museum featuring local artifacts and exhibitions.`,
-                rating: 4.5
-            },
-            {
-                name: 'Central Park',
-                description: 'Beautiful green space perfect for relaxing walks, picnics, and outdoor activities with scenic views.',
-                rating: 4.2
-            },
-            {
-                name: `${city} City Theater`,
-                description: `Experience local culture and performances at this historic venue showcasing ${city}'s artistic talent.`,
-                rating: 4.7
-            },
-            {
-                name: 'Old Town District',
-                description: 'Wander through charming cobblestone streets lined with traditional architecture, shops, and cafes.',
-                rating: 4.4
-            },
-            {
-                name: 'Botanical Gardens',
-                description: 'Stunning collection of local and exotic plants in beautifully maintained gardens with walking paths.',
-                rating: 4.6
-            },
-            {
-                name: 'Riverside Promenade',
-                description: 'Picturesque walkway along the river offering beautiful views and recreational opportunities.',
-                rating: 4.3
-            }
-        ];
-    }
-
-    getConditionIcon(condition) {
-        const icons = {
-            'Sunny': '☀️',
-            'Cloudy': '☁️',
-            'Partly Cloudy': '⛅',
-            'Rainy': '🌧️',
-            'Snowy': '❄️',
-            'Windy': '💨'
-        };
-        return icons[condition] || '🌤️';
+        return 'A must-visit destination offering unique experiences and insights into local culture and history. Perfect for tourists and locals alike.';
     }
 }
 
-// Export for use in main.js
+// Create and export global instance
 const weatherAPI = new WeatherAPI();
+console.log('✅ WeatherAPI module loaded successfully');
+
+// Export for Node.js environment (if needed)
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { WeatherAPI, weatherAPI };
+}
