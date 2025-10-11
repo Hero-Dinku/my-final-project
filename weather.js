@@ -144,6 +144,50 @@ class WeatherAPI {
 
     // Enhanced Mock Data Generators
     generateEnhancedMockWeatherData(city) {
+        // Try to detect an explicit country or US state in the provided city string
+        // so inputs like "Salt Lake City, Utah" are treated as United States
+        const inputParts = String(city || '').split(',').map(p => p.trim()).filter(Boolean);
+
+        const usStates = [
+            'alabama','alaska','arizona','arkansas','california','colorado','connecticut','delaware','florida','georgia',
+            'hawaii','idaho','illinois','indiana','iowa','kansas','kentucky','louisiana','maine','maryland','massachusetts',
+            'michigan','minnesota','mississippi','missouri','montana','nebraska','nevada','new hampshire','new jersey',
+            'new mexico','new york','north carolina','north dakota','ohio','oklahoma','oregon','pennsylvania','rhode island',
+            'south carolina','south dakota','tennessee','texas','utah','vermont','virginia','washington','west virginia','wisconsin','wyoming',
+            'al','ak','az','ar','ca','co','ct','de','fl','ga','hi','id','il','in','ia','ks','ky','la','me','md','ma','mi','mn','ms','mo','mt','ne','nv','nh','nj','nm','ny','nc','nd','oh','ok','or','pa','ri','sc','sd','tn','tx','ut','vt','va','wa','wv','wi','wy'
+        ];
+
+        const knownCountries = ['United States', 'United Kingdom', 'Canada', 'Australia', 'Germany', 'France', 'Japan', 'Italy'];
+
+        let parsedCountry = null;
+        // If any part matches a US state (name or abbreviation), prefer United States
+        for (const part of inputParts) {
+            if (usStates.includes(part.toLowerCase())) {
+                parsedCountry = 'United States';
+                break;
+            }
+        }
+
+        // If not US, check if last token is a known country name
+        if (!parsedCountry && inputParts.length > 1) {
+            const last = inputParts[inputParts.length - 1];
+            const match = knownCountries.find(c => c.toLowerCase() === last.toLowerCase());
+            if (match) parsedCountry = match;
+        }
+
+        // Determine the display name: remove the detected country/state tokens if parsed
+        let displayName = city;
+        if (parsedCountry) {
+            // remove country token if present
+            const filtered = inputParts.filter(p => {
+                if (parsedCountry === 'United States') {
+                    return !usStates.includes(p.toLowerCase());
+                }
+                return p.toLowerCase() !== parsedCountry.toLowerCase();
+            });
+            if (filtered.length) displayName = filtered.join(', ');
+        }
+
         const seed = this.generateSeed(city);
         const conditions = [
             { text: 'Sunny', icon: '☀️', temp: 25, humidity: 40, wind: 15 },
@@ -160,8 +204,8 @@ class WeatherAPI {
 
         return {
             location: {
-                name: city,
-                country: this.getMockCountry(seed),
+                name: displayName,
+                country: parsedCountry || this.getMockCountry(seed),
                 lat: (seed % 90).toFixed(4),
                 lon: (seed % 180).toFixed(4)
             },
